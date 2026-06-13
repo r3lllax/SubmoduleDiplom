@@ -1,0 +1,6 @@
+[submodule "backend"]
+	path = backend
+	url = https://github.com/r3lllax/Diplom.git
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/r3lllax/DiplomFrontend.git
