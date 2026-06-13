@@ -1,0 +1,84 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: songs          
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --tcp-keepalive 60 --save 900 1
+    networks:
+      - internal_network
+
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    depends_on:
+      - db
+      - redis
+    environment:
+      - SERVER_PORT=1337
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=songs
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=mLjEsxjjlTtOD1jvThGbJ6y4vLBfrVZe
+      - JWT_ACCESS_TOKEN_MINUTE_TIME=15
+      - JWT_REFRESH_TOKEN_HOURS_TIME=30
+      - GOOSE_DRIVER=postgres
+      - GOOSE_DBSTRING=postgres://postgres:password@db:5432/songs
+      - GOOSE_MIGRATION_DIR=./migrations
+      - GOOSE_TABLE=goose_migrations
+      - AVAILABLE_PHOTO_TYPES=.jpeg,.jpg,.png,.gif,.tiff,.raw,.svg
+      - AVAILABLE_SONG_TYPES=.mp3,.aac,.wav,.flac
+      - MAX_FILE_SIZE_MB=32
+      - PASSWORD_HASH_COST=12
+    ports:
+      - "1337:1337"
+    volumes:
+      - uploads:/app/uploads
+    networks:
+      - internal_network
+    # ports:
+    #   - "8080:8080"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - uploads:/data/uploads
+    networks:
+      - internal_network
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:           
+
+networks:
+  internal_network:
+    driver: bridge
