@@ -31,6 +31,7 @@ services:
       - db
       - redis
     environment:
+      - GIN_MODE=release
       - SERVER_PORT=1337
       - DB_HOST=db
       - DB_PORT=5432
@@ -54,14 +55,18 @@ services:
       - uploads:/app/uploads
     networks:
       - internal_network
-    ports:
-      - "1337:1337"
+#    ports:
+#      - "1337:1337"
 
   nginx:
     build:
       context: .
       dockerfile: nginx/Dockerfile
     container_name: nginx
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     restart: always
     ports:
       - "80:80"
