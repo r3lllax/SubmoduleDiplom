@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: songs          
+      POSTGRES_DB: songs
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -31,6 +31,7 @@ services:
       - db
       - redis
     environment:
+      - GIN_MODE=release
       - SERVER_PORT=1337
       - DB_HOST=db
       - DB_PORT=5432
@@ -50,20 +51,22 @@ services:
       - AVAILABLE_SONG_TYPES=.mp3,.aac,.wav,.flac
       - MAX_FILE_SIZE_MB=32
       - PASSWORD_HASH_COST=12
-    ports:
-      - "1337:1337"
     volumes:
       - uploads:/app/uploads
     networks:
       - internal_network
-    # ports:
-    #   - "8080:8080"
+#    ports:
+#      - "1337:1337"
 
   nginx:
     build:
       context: .
       dockerfile: nginx/Dockerfile
     container_name: nginx
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     restart: always
     ports:
       - "80:80"
